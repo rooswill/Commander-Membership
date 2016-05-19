@@ -1,0 +1,32 @@
+@font-face {
+    font-family: 'DinCondBold';
+    src: url('dincond-bold-opentype-webfont.eot');
+    src: url('dincond-bold-opentype-webfont.eot?#iefix') format('embedded-opentype'),
+         url('dincond-bold-opentype-webfont.woff') format('woff'),
+         url('dincond-bold-opentype-webfont.ttf') format('truetype'),
+         url('dincond-bold-opentype-webfont#dincond-bold') format('svg');
+    font-weight: normal;
+    font-style: normal;
+}
+
+@font-face {
+    font-family: 'FjallaoneRegular';
+    src: url('fjallaone-regular-webfont.eot');
+    src: url('fjallaone-regular-webfont.eot?#iefix') format('embedded-opentype'),
+         url('fjallaone-regular-webfont.woff') format('woff'),
+         url('fjallaone-regular-webfont.ttf') format('truetype'),
+         url('fjallaone-regular-webfont#fjallaone-regular') format('svg');
+    font-weight: normal;
+    font-style: normal;
+}
+
+@font-face {
+    font-family: 'GillionBlackDB';
+    src: url('gillionblackdb_normal-webfont.eot');
+    src: url('gillionblackdb_normal-webfont.eot?#iefix') format('embedded-opentype'),
+         url('gillionblackdb_normal-webfont.woff') format('woff'),
+         url('gillionblackdb_normal-webfont.ttf') format('truetype'),
+         url('gillionblackdb_normal-webfont#gillionblackdb-normal') format('svg');
+    font-weight: normal;
+    font-style: normal;
+}
