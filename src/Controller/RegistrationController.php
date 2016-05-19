@@ -90,6 +90,8 @@ class RegistrationController extends Controller
 
         $ownDB = $this->createCustomers($data);
 
+        pr($ownDB);
+
         if(count($checkUser->customers) > 0)
         {
             /* user found in shopify DB, check for tag */
@@ -338,8 +340,6 @@ class RegistrationController extends Controller
         else
         {
             $data = $this->Payfast->success();
-
-            pr($data);
 
             if($data['payment_status'] == 'COMPLETE')
             {
