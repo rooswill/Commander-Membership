@@ -339,6 +339,8 @@ class RegistrationController extends Controller
         {
             $data = $this->Payfast->success();
 
+            pr($data);
+
             if($data['payment_status'] == 'COMPLETE')
             {
                 if(isset($customerData))
