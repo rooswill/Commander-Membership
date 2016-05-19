@@ -100,8 +100,9 @@ class ShopifyComponent extends Component
 
     public function _findUsers($email = NULL)
     {	
-    	$this->_updateUrl('customers/search.json?query=email:"'.urlencode($email).'"');
+    	$this->_updateUrl('customers/search.json?query=email:'.urlencode($email));
     	$data = json_decode($this->_requestGet());
+
     	return $data;
     }
 

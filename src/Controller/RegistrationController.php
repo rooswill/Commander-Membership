@@ -90,8 +90,6 @@ class RegistrationController extends Controller
 
         $ownDB = $this->createCustomers($data);
 
-        pr($ownDB);
-
         if(count($checkUser->customers) > 0)
         {
             /* user found in shopify DB, check for tag */
@@ -299,6 +297,7 @@ class RegistrationController extends Controller
         $formData = $this->request->session()->read('userFormData');
         $customers = TableRegistry::get('Customers');
         $customerData = $customers->find()->where(['email' => $formData['email']])->toArray();
+
         $date = date("Y-m-d H:i:s");
 
         if(isset($this->request->data['response']))
@@ -309,7 +308,7 @@ class RegistrationController extends Controller
                 return $this->redirect(SITE_URL.'/registration/failed');
             else
             {
-                if(isset($customerData))
+                if(count($customerData) > 0)
                 {
                     foreach($customerData as $customer)
                     {
@@ -332,8 +331,11 @@ class RegistrationController extends Controller
                 }
                 else
                 {
-                    if($this->createMainUser($formData)) 
-                        return $this->redirect(STORE_URL.'/account/login');
+                    if($this->createMainUser($formData))
+                    {
+                        if($this->createCustomers($formData))
+                            return $this->redirect(STORE_URL.'/account/login');
+                    }
                 }
             }
         }
@@ -343,7 +345,7 @@ class RegistrationController extends Controller
 
             if($data['payment_status'] == 'COMPLETE')
             {
-                if(isset($customerData))
+                if(isset($customerData) && count($customerData) > 0)
                 {
                     foreach($customerData as $customer)
                     {
@@ -366,8 +368,11 @@ class RegistrationController extends Controller
                 }
                 else
                 {
-                    if($this->createMainUser($formData))  
-                        return $this->redirect(STORE_URL.'/account/login');
+                    if($this->createMainUser($formData))
+                    {
+                        if($this->createCustomers($formData))
+                            return $this->redirect(STORE_URL.'/account/login');
+                    }
                     else
                         return $this->redirect(SITE_URL);
                 }
@@ -429,6 +434,31 @@ class RegistrationController extends Controller
         }
     }
 
+    public function checkDB()
+    {
+        $customers = TableRegistry::get('Customers');
+
+        $customers->query()->insert([
+            'name', 
+            'surname', 
+            'email',
+            'status',
+            'date_paid',
+            'created',
+            'modified'
+        ])->values([
+            'name' => 'Will', 
+            'surname' => 'Roos', 
+            'email' => 'rooswill@gmail.com',
+            'status' => 'active',
+            'date_paid' => NULL,
+            'created' => NULL,
+            'modified' => NULL
+        ])->execute();
+
+        die();
+    }
+
     public function verifySnapScan()
     {
         $formData = $this->request->session()->read('userFormData');
@@ -454,9 +484,9 @@ class RegistrationController extends Controller
 
                 if($d->status = 'completed' && $d->order_id == $orderID)
                 {
-                    if(isset($customerData))
-                    {
 
+                    if(count($customerData) > 0)
+                    {
                         foreach($customerData as $customer)
                         {
                             if($customer['email'] == $formData['email'])
@@ -465,7 +495,6 @@ class RegistrationController extends Controller
                                 {
                                     if($this->sendActivationUrl($customer['email']))
                                     {
-
                                         $customer->status = 'active';
                                         $customer->date_paid = date("Y-m-d H:i:s");
                                         $customers->save($customer);
@@ -476,6 +505,12 @@ class RegistrationController extends Controller
                                     }
                                 }
                             }
+                            else
+                            {
+                                $this->request->session()->delete('orderID');
+                                $this->request->session()->delete('userFormData');
+                                $returnData['member_status'] = 'active';
+                            }
                         }
 
                     }
@@ -483,9 +518,12 @@ class RegistrationController extends Controller
                     {
                         if($this->createMainUser($formData))
                         {
-                            $this->request->session()->delete('orderID');
-                            $this->request->session()->delete('userFormData');
-                            $returnData['member_status'] = 'active';
+                            if($this->createCustomers($formData))
+                            {
+                                $this->request->session()->delete('orderID');
+                                $this->request->session()->delete('userFormData');
+                                $returnData['member_status'] = 'active';
+                            }
                         }
                     }
                 }
@@ -506,14 +544,10 @@ class RegistrationController extends Controller
 
         $date = date("Y-m-d H:i:s");
 
-        if(!isset($customerData))
+        if(count($customerData) <= 0)
         {
             $customers->query()->insert([
-                'name', 
-                'surname', 
-                'email',
-                'status',
-                'date_paid'
+                'name', 'surname', 'email', 'status', 'date_paid', 'created', 'modified'
             ])->values([
                 'name' => $data['first_name'], 
                 'surname' => $data['last_name'], 
@@ -537,7 +571,7 @@ class RegistrationController extends Controller
 
         $dayLimit = 31;
 
-        if(isset($customerData))
+        if(count($customerData) > 0)
         {
             foreach($customerData as $customer)
             {
@@ -566,8 +600,6 @@ class RegistrationController extends Controller
                         $find = $this->Shopify->_findUsers($customer['email']);
                         $customerID = $find->customers[0]->id;
 
-                        pr($customerID);
-
                         $this->sendDeactivationEmail($customer['email'], $customerID);
                     }
                 }
@@ -592,8 +624,6 @@ class RegistrationController extends Controller
         // ]);
 
         $adminEmail = "rooswill@gmail.com";
-
-        echo $notification;
 
         if($notification == 28)
             $template = 'first_notification';
