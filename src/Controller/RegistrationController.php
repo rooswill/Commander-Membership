@@ -434,7 +434,7 @@ class RegistrationController extends Controller
         //$orderID = 'order359';
 
         $customers = TableRegistry::get('Customers');
-        $customerData = $customers->find()->where(['email' => $data['email']])->toArray();
+        $customerData = $customers->find()->where(['email' => $formData['email']])->toArray();
         $date = date("Y-m-d H:i:s");
 
         $snapscan = TableRegistry::get('Snapscan');
