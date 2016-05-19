@@ -1,6 +1,6 @@
 var STORE_URL = 'https://www.commanderstore.com/';
 //var SITE_URL = 'http://commander_registration.local/';
-var SITE_URL = 'http://samro.frprojects.co.za/';
+var SITE_URL = 'http://membership.commanderstore.com/';
 
 $(document).ready(function()
 {
