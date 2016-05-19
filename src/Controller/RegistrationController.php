@@ -432,18 +432,12 @@ class RegistrationController extends Controller
         $formData = $this->request->session()->read('userFormData');
         $orderID = $this->request->session()->read('orderID');
 
-        pr($orderID);
-
-        //$orderID = 'order359';
-
         $customers = TableRegistry::get('Customers');
         $customerData = $customers->find()->where(['email' => $formData['email']])->toArray();
         $date = date("Y-m-d H:i:s");
 
         $snapscan = TableRegistry::get('Snapscan');
         $data = $snapscan->find()->where(['order_id' => $orderID])->all();
-
-        pr($data);
 
         $returnData['member_status'] = 'inactive';
 
