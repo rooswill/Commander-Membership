@@ -66,12 +66,13 @@ class RegistrationController extends Controller
         	if($this->request->is('post'))
         	{
                 $data = $this->request->session()->read('cashlogData');
+                $mobileNumber = $data->infoToDisplay->userId->msisdn;
 
-                if($data->mainErrorCode != NULL && $data->mainErrorCode != '')
+                if(isset($data->mainErrorCode))
                     return $this->redirect(SITE_URL.'/registration/failed');
                 else
                 {
-                    if($this->createMainUser($this->request->data))  
+                    if($this->createMainUser($this->request->data, $mobileNumber))  
                         return $this->redirect(STORE_URL.'/account/login');
                 }
         	}
@@ -276,6 +277,14 @@ class RegistrationController extends Controller
         $email->send();
     }
 
+    public function customerRedirect()
+    {
+        if($this->request->session()->read('cashlogData'))
+            return $this->redirect('/');
+        else
+            return $this->redirect('/registration/organic');
+    }
+
     public function processCashlogDetails()
     {
         if(isset($this->request->data['response']))
@@ -303,8 +312,10 @@ class RegistrationController extends Controller
         if(isset($this->request->data['response']))
         {
             $data = $this->Cashlog->process($this->request->data);
+
+            $mobileNumber = $data->infoToDisplay->userId->msisdn;
             
-            if($data->mainErrorCode != NULL && $data->mainErrorCode != '')
+            if(isset($data->mainErrorCode))
                 return $this->redirect(SITE_URL.'/registration/failed');
             else
             {
@@ -326,6 +337,8 @@ class RegistrationController extends Controller
                                     return $this->redirect(STORE_URL.'/account/login');
                                 }
                             }
+                            else
+                                return $this->redirect(STORE_URL.'/account/login');
                         }
                     }
                 }
@@ -333,7 +346,7 @@ class RegistrationController extends Controller
                 {
                     if($this->createMainUser($formData))
                     {
-                        if($this->createCustomers($formData))
+                        if($this->createCustomers($formData, $mobileNumber))
                             return $this->redirect(STORE_URL.'/account/login');
                     }
                 }
@@ -536,7 +549,7 @@ class RegistrationController extends Controller
 
     // custom user management
 
-    public function createCustomers($data = NULL)
+    public function createCustomers($data = NULL, $mobileNumber = NULL)
     {
 
         $customers = TableRegistry::get('Customers');
@@ -547,11 +560,12 @@ class RegistrationController extends Controller
         if(count($customerData) <= 0)
         {
             $customers->query()->insert([
-                'name', 'surname', 'email', 'status', 'date_paid', 'created', 'modified'
+                'name', 'surname', 'email', 'mobile_number', 'status', 'date_paid', 'created', 'modified'
             ])->values([
                 'name' => $data['first_name'], 
                 'surname' => $data['last_name'], 
                 'email' => $data['email'],
+                'mobile_number' => $mobileNumber,
                 'status' => 'active',
                 'date_paid' => $date,
                 'created' => $date,
