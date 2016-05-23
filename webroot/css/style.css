@@ -506,6 +506,11 @@ footer {
 	opacity: 0.6;
 }*/
 
+.mainPaymentError {
+	text-align: center;
+	padding:40px;
+}
+
 .film_roll_prev, .film_roll_next {
 	display:none !important;
 }

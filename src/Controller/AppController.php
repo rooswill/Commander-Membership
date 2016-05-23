@@ -16,6 +16,8 @@ namespace App\Controller;
 
 use Cake\Controller\Controller;
 use Cake\Event\Event;
+use Cake\ORM\TableRegistry;
+use Cake\Datasource\ConnectionManager;
 
 /**
  * Application Controller
@@ -58,6 +60,53 @@ class AppController extends Controller
         ) {
             $this->set('_serialize', true);
         }
+    }
+
+    public function getRealIpAddr()
+    {
+        if (!empty($_SERVER['HTTP_CLIENT_IP']))
+            $ip=$_SERVER['HTTP_CLIENT_IP'];
+        elseif (!empty($_SERVER['HTTP_X_FORWARDED_FOR']))
+            $ip=$_SERVER['HTTP_X_FORWARDED_FOR'];
+        else
+            $ip=$_SERVER['REMOTE_ADDR'];
+
+        return $ip;
+    }
+
+    public function tracking($page = NULL, $action = NULL)
+    {
+        $ip = $this->getRealIpAddr();
+
+        $tracking = TableRegistry::get('Trackings');
+
+        $date = date("Y-m-d H:i:s");
+
+        if(isset($_SERVER['HTTP_REFERER']))
+            $referer = $_SERVER['HTTP_REFERER'];
+        else
+            $referer = NULL;        
+
+        $tracking->query()->insert([
+            'page', 
+            'action', 
+            'referrer',
+            'url',
+            'ip',
+            'modified',
+            'created'
+        ])->values([
+            'page' => $page, 
+            'action' => $action, 
+            'referrer' => $referer,
+            'url' => $_SERVER['SERVER_NAME'].$_SERVER['REQUEST_URI'],
+            'ip' => $ip,
+            'modified' => $date,
+            'created' => $date
+        ])->execute();
+
+        return true;
+
     }
 
 }

@@ -9,7 +9,7 @@ use Cake\ORM\TableRegistry;
 use Cake\Datasource\ConnectionManager;
 
 
-class RegistrationController extends Controller
+class RegistrationController extends AppController
 {
 
     public $globalPayment = false;
@@ -28,12 +28,15 @@ class RegistrationController extends Controller
 
     public function organic()
     {
+        $this->tracking('organic', 'pageview');
+
         $pfHost = ( PAYFAST_SERVER == 'LIVE' ) ? 'www.payfast.co.za' : 'sandbox.payfast.co.za';
         $this->set('payfast_host', $pfHost);
     }
 
     public function renew()
     {
+        $this->tracking('renew membership', 'pageview');
         $pfHost = ( PAYFAST_SERVER == 'LIVE' ) ? 'www.payfast.co.za' : 'sandbox.payfast.co.za';
         $this->set('payfast_host', $pfHost);
     }
@@ -42,6 +45,8 @@ class RegistrationController extends Controller
     {
         if(isset($this->request->query['p']))
         {
+            $this->tracking('registration - organic', 'pageview');
+
             $paymentType = $this->request->query['p'];
             $paymentTypes = array('cashlog', 'payfast', 'snapchat');
 
@@ -50,6 +55,8 @@ class RegistrationController extends Controller
                 if(hash('md5', $ptype) == $paymentType)
                     $paymentType = $ptype;
             }
+
+            $this->tracking($paymentType.'option', 'payment method');
 
             $this->set('paymentType', $paymentType);
         }
@@ -63,6 +70,7 @@ class RegistrationController extends Controller
 
         if($this->request->session()->read('cashlogData'))
         {
+            $this->tracking('registration - cashlog banner', 'pageview');
         	if($this->request->is('post'))
         	{
                 $data = $this->request->session()->read('cashlogData');
@@ -73,7 +81,10 @@ class RegistrationController extends Controller
                 else
                 {
                     if($this->createMainUser($this->request->data, $mobileNumber))  
+                    {
+                        $this->tracking('cashlog banner flow', 'customer created');
                         return $this->redirect(STORE_URL.'/account/login');
+                    }
                 }
         	}
         }
@@ -99,6 +110,7 @@ class RegistrationController extends Controller
             {
                 /* Login and Redirect User */
                 //echo "User found already, you will be redirected shortly.";
+                $this->tracking('create customer', 'existing customer');
                 return true;
             }
             else
@@ -108,6 +120,7 @@ class RegistrationController extends Controller
                 $userUpdateStatus = $this->updateUser($data['email']);
                 if($userUpdateStatus)
                 {
+                    $this->tracking('create customer', 'existing customer - update tag status');
                     $this->sendUserUpdateEmail($data['email']);
                     return true;
                 }
@@ -141,6 +154,7 @@ class RegistrationController extends Controller
 
                 // $sms = $this->Sms->setValues(1222, trim($cellphone), $textMessage, 3, 0, SMS_FROM_NUMBER, 0, null, null);
                 // $smsResult = $this->Sms->Send();
+                $this->tracking('create customer', 'new customer');
                 $this->sendUserUpdateEmail($data['email']);
                 return true;
             }
@@ -151,6 +165,7 @@ class RegistrationController extends Controller
 
     public function createNewUser($data = NULL)
     {
+        $this->tracking('create customer', 'create customer internal database');
         if($this->Shopify->_createUser($data))
         	return true;
         else
@@ -204,6 +219,8 @@ class RegistrationController extends Controller
         	)
         );
 
+        //$this->tracking('customer', 'update customer tag');
+
     	if($data = $this->Shopify->_updateUser($email, $requestData))
     		return true;
     	else
@@ -225,7 +242,10 @@ class RegistrationController extends Controller
         if($data = $this->Shopify->_getActivationUrl($customerID, $requestData))
         {
             if($this->sendUserActivation($customerEmail, $data))
+            {
+                $this->tracking('customer', 'send activation URL');
                 return true;
+            }
         }
         else
             return false;
@@ -295,6 +315,7 @@ class RegistrationController extends Controller
                 return $this->redirect(SITE_URL.'/registration/failed');
             else
             {
+                $this->tracking('payments', 'cashlog banner flow');
                 $this->request->session()->write('cashlogData', $data);
                 return $this->redirect(STORE_URL);
             }
@@ -319,6 +340,7 @@ class RegistrationController extends Controller
                 return $this->redirect(SITE_URL.'/registration/failed');
             else
             {
+                $this->tracking('payments', 'cashlog payment completed');
                 if(count($customerData) > 0)
                 {
                     foreach($customerData as $customer)
@@ -358,6 +380,7 @@ class RegistrationController extends Controller
 
             if($data['payment_status'] == 'COMPLETE')
             {
+                $this->tracking('payments', 'payfast payment completed');
                 if(isset($customerData) && count($customerData) > 0)
                 {
                     foreach($customerData as $customer)
@@ -396,6 +419,7 @@ class RegistrationController extends Controller
 
     public function failed()
     {
+        $this->tracking('payments', 'payment failed');
         if($this->request->session()->read('userData'))
         {
             $data = $this->request->session()->read('userData');
@@ -414,6 +438,8 @@ class RegistrationController extends Controller
 
         $this->request->session()->write('orderID', $orderID);
 
+        $this->tracking('snapscan', 'pageview');
+
         if($this->request->is('post'))
         {
             $stringData = file_get_contents("php://input");
@@ -425,7 +451,7 @@ class RegistrationController extends Controller
 
             if($details->status == 'completed')
             {
-
+                $this->tracking('payments', 'snapscan payment completed');
                 $snapscan = TableRegistry::get('Snapscan');
 
                 if(isset($details->extra->id))
@@ -486,6 +512,8 @@ class RegistrationController extends Controller
 
         $returnData['member_status'] = 'inactive';
 
+        $this->tracking('snapscan', 'verify payment');
+
         if(isset($data))
         {
             foreach($data as $d)
@@ -498,6 +526,7 @@ class RegistrationController extends Controller
                 if($d->status = 'completed' && $d->order_id == $orderID)
                 {
 
+                    $this->tracking('snapscan', 'verified payment');
                     if(count($customerData) > 0)
                     {
                         foreach($customerData as $customer)
@@ -690,5 +719,4 @@ class RegistrationController extends Controller
         }
             
     }
-
 }
