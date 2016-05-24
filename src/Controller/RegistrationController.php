@@ -8,10 +8,8 @@ use Cake\Mailer\Email;
 use Cake\ORM\TableRegistry;
 use Cake\Datasource\ConnectionManager;
 
-
 class RegistrationController extends AppController
 {
-
     public $globalPayment = false;
 
     public function initialize()
