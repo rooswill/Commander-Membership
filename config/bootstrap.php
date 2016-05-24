@@ -203,9 +203,9 @@ Type::build('date')->useLocaleParser();
 Type::build('datetime')->useLocaleParser();
 
 define('STORE_URL', 'https://www.commanderstore.com');
-//define('SITE_URL', 'http://membership.commanderstore.com');
+define('SITE_URL', 'http://membership.commanderstore.com');
 //define('SITE_URL', 'http://samro.frprojects.co.za');
-define('SITE_URL', 'http://commander_registration.local');
+//define('SITE_URL', 'http://commander_registration.local');
 define('SMS_ENABLED', true);
 define('SMS_USER_NAME', '22186');
 define('SMS_PASSWORD', 'emkay1');
