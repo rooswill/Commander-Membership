@@ -155,7 +155,7 @@ class RegistrationController extends AppController
                 // $sms = $this->Sms->setValues(1222, trim($cellphone), $textMessage, 3, 0, SMS_FROM_NUMBER, 0, null, null);
                 // $smsResult = $this->Sms->Send();
                 $this->tracking('create customer', 'new customer');
-                $this->sendUserUpdateEmail($data['email']);
+                //$this->sendUserUpdateEmail($data['email']);
                 return true;
             }
             else
@@ -187,12 +187,13 @@ class RegistrationController extends AppController
         }
 
         $checkUser = $this->Shopify->_findUsers($this->request->data['email']);
+
         if(count($checkUser->customers) > 0)
         {
             $customers = TableRegistry::get('Customers');
             $customerData = $customers->find()->where(['email' => $data['email']])->toArray();
 
-            if(isset($customerData))
+            if(count($customerData) > 0)
             {
                 foreach($customerData as $customer)
                 {
