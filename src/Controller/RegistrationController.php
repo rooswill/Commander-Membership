@@ -95,12 +95,12 @@ class RegistrationController extends AppController
         }
     }
 
-    public function createMainUser($data)
+    public function createMainUser($data, $mobileNumber = NULL)
     {
         // check if users exist in shopify DB
         $checkUser = $this->Shopify->_findUsers($data['email']);
 
-        $ownDB = $this->createCustomers($data);
+        $ownDB = $this->createCustomers($data, $mobileNumber);
 
         if(count($checkUser->customers) > 0)
         {
@@ -265,14 +265,17 @@ class RegistrationController extends AppController
 
         $data = json_decode($data);
 
-        $fromEmail = array('activations@commanderhq.com' => 'Customer Account Activation');
-        $email = new Email();
-        $email->viewVars(['data' => $data->account_activation_url]);
-        $email->template('customer', 'default');
-        $email->emailFormat('html');
-        $email->to($userEmail);
-        $email->from($fromEmail);
-        $email->send();
+        if(isset($data->account_activation_url))
+        {
+            $fromEmail = array('activations@commanderhq.com' => 'Customer Account Activation');
+            $email = new Email();
+            $email->viewVars(['data' => $data->account_activation_url]);
+            $email->template('customer', 'default');
+            $email->emailFormat('html');
+            $email->to($userEmail);
+            $email->from($fromEmail);
+            $email->send();
+        }
 
         return true;
     }
@@ -355,6 +358,7 @@ class RegistrationController extends AppController
 
                                     $customer->status = 'active';
                                     $customer->date_paid = date("Y-m-d H:i:s");
+                                    $customer->days_remaining = 31 + $customer['days_remaining'];
                                     $customers->save($customer);
 
                                     return $this->redirect(STORE_URL.'/account/login');
@@ -395,11 +399,14 @@ class RegistrationController extends AppController
 
                                     $customer->status = 'active';
                                     $customer->date_paid = date("Y-m-d H:i:s");
+                                    $customer->days_remaining = 31 + $customer['days_remaining'];
                                     $customers->save($customer);
 
                                     return $this->redirect(STORE_URL.'/account/login');
                                 }
                             }
+                            else
+                                return $this->redirect(STORE_URL.'/account/login');
                         }
                     }
                 }
@@ -540,6 +547,7 @@ class RegistrationController extends AppController
                                     {
                                         $customer->status = 'active';
                                         $customer->date_paid = date("Y-m-d H:i:s");
+                                        $customer->days_remaining = 31 + $customer['days_remaining'];
                                         $customers->save($customer);
 
                                         $this->request->session()->delete('orderID');
@@ -590,7 +598,7 @@ class RegistrationController extends AppController
         if(count($customerData) <= 0)
         {
             $customers->query()->insert([
-                'name', 'surname', 'email', 'mobile_number', 'status', 'date_paid', 'created', 'modified'
+                'name', 'surname', 'email', 'mobile_number', 'status', 'date_paid', 'days_remaining', 'created', 'modified'
             ])->values([
                 'name' => $data['first_name'], 
                 'surname' => $data['last_name'], 
@@ -598,6 +606,7 @@ class RegistrationController extends AppController
                 'mobile_number' => $mobileNumber,
                 'status' => 'active',
                 'date_paid' => $date,
+                'days_remaining' => 31,
                 'created' => $date,
                 'modified' => $date
             ])->execute();
@@ -613,28 +622,27 @@ class RegistrationController extends AppController
         $customers = TableRegistry::get('Customers');
         $customerData = $customers->find()->toArray();
 
-        $dayLimit = 31;
-
         if(count($customerData) > 0)
         {
             foreach($customerData as $customer)
             {
-                $now = time(); // or your date as well
-                $your_date = strtotime($customer['date_paid']);
-                $datediff = $now - $your_date;
-                $dayStatus = floor( $datediff / (60*60*24) );
-
-                if($dayStatus == 28)
+                if($customer['days_remaining'] > 0)
+                {
+                    $customer->days_remaining = $customer['days_remaining'] - 1;
+                    $customers->save($customer);
+                }
+                
+                if($customer['days_remaining'] == 5)
                 {
                     echo 'send first notification';
                     $this->sendCustomerNotifications($customer, $dayStatus);
                 }
-                elseif($dayStatus == 30)
+                elseif($customer['days_remaining'] == 3)
                 {
                     echo 'send final notification';
                     $this->sendCustomerNotifications($customer, $dayStatus);
                 }
-                elseif($dayStatus >= $dayLimit)
+                elseif($customer['days_remaining'] == 0)
                 {
                     if($customer['status'] == 'active')
                     {
@@ -647,7 +655,6 @@ class RegistrationController extends AppController
                         $this->sendDeactivationEmail($customer['email'], $customerID);
                     }
                 }
-
             }
         }
 
