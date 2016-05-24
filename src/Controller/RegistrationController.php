@@ -726,3 +726,5 @@ class RegistrationController extends AppController
             
     }
 }
+
+
