@@ -43,9 +43,9 @@
 				</div>
 				<div class="form-submit">
 					<div class="payment-btns">
-						<div class="payment-btn cashlog-btn"><a href="#" onclick="submitFormData('cashlog');"><img src="/img/site-images/cashlog-btn.jpg" /><!--</a>--></div>
-						<div class="payment-btn payfast-btn"><a href="#" onclick="submitFormData('payfast');"><img src="/img/site-images/payfast-btn.jpg" /></a></div>
-						<div class="payment-btn snapscan-btn"><a href="#" onclick="submitFormDataSnapScan();"><img src="/img/site-images/snapscan-btn.jpg" /></a></div>
+						<div class="payment-btn cashlog-btn"><a href="#" onclick="submitFormData('cashlog', 1);"><img src="/img/site-images/cashlog-btn.jpg" /></a></div>
+						<div class="payment-btn payfast-btn"><a href="#" onclick="submitFormData('payfast', 1);"><img src="/img/site-images/payfast-btn.jpg" /></a></div>
+						<div class="payment-btn snapscan-btn"><a href="#" onclick="submitFormDataSnapScan(1);"><img src="/img/site-images/snapscan-btn.jpg" /></a></div>
 					</div>
 				</div>
 

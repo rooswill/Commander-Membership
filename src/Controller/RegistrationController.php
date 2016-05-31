@@ -78,10 +78,13 @@ class RegistrationController extends AppController
                     return $this->redirect(SITE_URL.'/registration/failed');
                 else
                 {
-                    if($this->createMainUser($this->request->data, $mobileNumber))  
+                    if($this->createMainUser($this->request->data))  
                     {
-                        $this->tracking('cashlog banner flow', 'customer created');
-                        return $this->redirect(STORE_URL.'/account/login');
+                        if($this->createCustomers($this->request->data, $mobileNumber))
+                        {
+                            $this->tracking('cashlog banner flow', 'customer created');
+                            return $this->redirect(STORE_URL.'/account/login');
+                        }
                     }
                 }
         	}
@@ -93,12 +96,14 @@ class RegistrationController extends AppController
         }
     }
 
-    public function createMainUser($data, $mobileNumber = NULL)
+    public function createMainUser($data)
     {
         // check if users exist in shopify DB
         $checkUser = $this->Shopify->_findUsers($data['email']);
+        $customers = TableRegistry::get('Customers');
+        $customerData = $customers->find()->where(['email' => $data['email']])->toArray();
 
-        $ownDB = $this->createCustomers($data, $mobileNumber);
+        //$ownDB = $this->createCustomers($data, $mobileNumber);
 
         if(count($checkUser->customers) > 0)
         {
@@ -106,6 +111,8 @@ class RegistrationController extends AppController
             $userTagStatus = $this->Shopify->_checkUserTagStatus($checkUser);
             if($userTagStatus)
             {
+                if(count($customerData) <= 0)
+                    $this->createCustomers($data);
                 /* Login and Redirect User */
                 //echo "User found already, you will be redirected shortly.";
                 $this->tracking('create customer', 'existing customer');
@@ -118,7 +125,11 @@ class RegistrationController extends AppController
                 $userUpdateStatus = $this->updateUser($data['email']);
                 if($userUpdateStatus)
                 {
+                    if(count($customerData) <= 0)
+                        $this->createCustomers($data);
+
                     $this->tracking('create customer', 'existing customer - update tag status');
+
                     $this->sendUserUpdateEmail($data['email']);
                     return true;
                 }
@@ -172,6 +183,7 @@ class RegistrationController extends AppController
 
     public function saveUserDetails()
     {
+        $returnData['redirect'] = false;
         //save user details to session for later use after payment
         if($this->request->is('post'))
         {
@@ -187,24 +199,31 @@ class RegistrationController extends AppController
         $checkUser = $this->Shopify->_findUsers($this->request->data['email']);
 
         if(count($checkUser->customers) > 0)
-        {
-            $customers = TableRegistry::get('Customers');
-            $customerData = $customers->find()->where(['email' => $data['email']])->toArray();
+            $returnData['already_member'] = true;
 
-            if(count($customerData) > 0)
+        $customers = TableRegistry::get('Customers');
+        $customerData = $customers->find()->where(['email' => $data['email']])->toArray();
+
+        if(count($customerData) > 0)
+        {
+            foreach($customerData as $customer)
             {
-                foreach($customerData as $customer)
+                if($customer['email'] == $this->request->data['email'])
                 {
-                    if($customer['email'] == $this->request->data['email'])
-                    {
-                        if($customer['status'] != 'inactive')
-                            $returnData['already_member'] = true;
-                    }
+                    if($customer['status'] != 'inactive')
+                        $returnData['already_member'] = true;
                 }
             }
-            else
-                $returnData['already_member'] = true;
         }
+
+        if($this->request->data['renew'])
+        {
+            if(count($customerData) > 0)
+                $returnData['already_member'] = false;
+            else
+                $returnData['redirect'] = true;
+        }
+            
 
         echo json_encode($returnData);
         die();
@@ -356,14 +375,25 @@ class RegistrationController extends AppController
 
                                     $customer->status = 'active';
                                     $customer->date_paid = date("Y-m-d H:i:s");
+                                    $customer->modified = date("Y-m-d H:i:s");
                                     $customer->days_remaining = 31 + $customer['days_remaining'];
+                                    $customer->renewed = 1;
                                     $customers->save($customer);
 
                                     return $this->redirect(STORE_URL.'/account/login');
                                 }
                             }
                             else
+                            {
+                                $customer->status = 'active';
+                                $customer->date_paid = date("Y-m-d H:i:s");
+                                $customer->modified = date("Y-m-d H:i:s");
+                                $customer->days_remaining = 31 + $customer['days_remaining'];
+                                $customer->renewed = 1;
+                                $customers->save($customer);
+
                                 return $this->redirect(STORE_URL.'/account/login');
+                            }
                         }
                     }
                 }
@@ -397,14 +427,25 @@ class RegistrationController extends AppController
 
                                     $customer->status = 'active';
                                     $customer->date_paid = date("Y-m-d H:i:s");
+                                    $customer->modified = date("Y-m-d H:i:s");
                                     $customer->days_remaining = 31 + $customer['days_remaining'];
+                                    $customer->renewed = 1;
                                     $customers->save($customer);
 
                                     return $this->redirect(STORE_URL.'/account/login');
                                 }
                             }
                             else
+                            {
+                                $customer->status = 'active';
+                                $customer->date_paid = date("Y-m-d H:i:s");
+                                $customer->modified = date("Y-m-d H:i:s");
+                                $customer->days_remaining = 31 + $customer['days_remaining'];
+                                $customer->renewed = 1;
+                                $customers->save($customer);
+
                                 return $this->redirect(STORE_URL.'/account/login');
+                            }
                         }
                     }
                 }
@@ -545,7 +586,9 @@ class RegistrationController extends AppController
                                     {
                                         $customer->status = 'active';
                                         $customer->date_paid = date("Y-m-d H:i:s");
+                                        $customer->modified = date("Y-m-d H:i:s");
                                         $customer->days_remaining = 31 + $customer['days_remaining'];
+                                        $customer->renewed = 1;
                                         $customers->save($customer);
 
                                         $this->request->session()->delete('orderID');
@@ -556,6 +599,13 @@ class RegistrationController extends AppController
                             }
                             else
                             {
+                                $customer->status = 'active';
+                                $customer->date_paid = date("Y-m-d H:i:s");
+                                $customer->modified = date("Y-m-d H:i:s");
+                                $customer->days_remaining = 31 + $customer['days_remaining'];
+                                $customer->renewed = 1;
+                                $customers->save($customer);
+
                                 $this->request->session()->delete('orderID');
                                 $this->request->session()->delete('userFormData');
                                 $returnData['member_status'] = 'active';
@@ -596,7 +646,7 @@ class RegistrationController extends AppController
         if(count($customerData) <= 0)
         {
             $customers->query()->insert([
-                'name', 'surname', 'email', 'mobile_number', 'status', 'date_paid', 'days_remaining', 'created', 'modified'
+                'name', 'surname', 'email', 'mobile_number', 'status', 'date_paid', 'days_remaining', 'renewed', 'created', 'modified'
             ])->values([
                 'name' => $data['first_name'], 
                 'surname' => $data['last_name'], 
@@ -605,6 +655,7 @@ class RegistrationController extends AppController
                 'status' => 'active',
                 'date_paid' => $date,
                 'days_remaining' => 31,
+                'renewed' => 0,
                 'created' => $date,
                 'modified' => $date
             ])->execute();

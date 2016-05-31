@@ -715,6 +715,20 @@ footer {
 		font-size:3vw;
 	}
 
+	.buy-now-btn-text {
+		line-height: 38px;
+	    margin: 0 auto;
+	    text-align: center;
+	    width: 90%;
+	}
+
+	.padded-header {
+		margin-bottom: 10px;
+		padding-left: 0px;
+		text-align: left;
+		font-size: 7vw;
+	}
+
 }
 
 @media (min-width:0px) and (max-width:400px) {
@@ -885,4 +899,22 @@ footer {
 		font-family: arial;
 		font-size:3vw;
 	}
+
+	.buy-now-btn-text {
+		line-height: 30px;
+	    margin: 0 auto;
+	    text-align: center;
+	    width: 90%;
+	}
+
+	.padded-header {
+		margin-bottom: 10px;
+		padding-left: 0px;
+		text-align: left;
+		font-size: 7vw;
+	}
+}
+
+.weekly-container {
+	padding:40px;
 }

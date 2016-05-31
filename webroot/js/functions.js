@@ -113,7 +113,7 @@ $(document).ready(function()
     });
 });
 
-function submitFormData(formName)
+function submitFormData(formName, renew)
 {
     if($('#registration-form').valid())
     {
@@ -122,6 +122,7 @@ function submitFormData(formName)
             email : $('#email').val(),
             last_name : $('#last-name').val(),
             password : $('#password').val(),
+            renew : renew
         }
 
         $.ajax({
@@ -131,16 +132,24 @@ function submitFormData(formName)
             dataType:"json",                 // return type
             success: function(response){
                 // submit cashlog form
+
+                //console.log(response);
+
                 if(response['status'])
                 {
-                    //console.log(response);
-                    if(response['already_member'])
-                        document.location = STORE_URL+'/account/login';
+                    if(response['redirect'])
+                        document.location = SITE_URL+'/registration/organic';
                     else
-                        document.forms[formName+'PaymentForm'].submit();
+                    {
+                        if(response['already_member'])
+                            document.location = STORE_URL+'/account/login';
+                        else
+                            document.forms[formName+'PaymentForm'].submit();
+                    }
                 }
                 else
                     alert('Something seems to have gone wrong, please try again later.');
+
             },   // callback function
             error: function(){
 
@@ -150,7 +159,7 @@ function submitFormData(formName)
     }
 }
 
-function submitFormDataSnapScan()
+function submitFormDataSnapScan(renew)
 {
     if($('#registration-form').valid())
     {
@@ -159,6 +168,7 @@ function submitFormDataSnapScan()
             email : $('#email').val(),
             last_name : $('#last-name').val(),
             password : $('#password').val(),
+            renew : renew
         }
 
         $.ajax({
@@ -168,13 +178,20 @@ function submitFormDataSnapScan()
             dataType:"json",                 // return type
             success: function(response){
                 // submit cashlog form
+
+                console.log(response);
+
                 if(response['status'])
                 {
-                    //console.log(response);
-                    if(response['already_member'])
-                        document.location = STORE_URL+'/account/login';
+                    if(response['redirect'])
+                        document.location = SITE_URL+'/registration/organic';
                     else
-                        document.location = SITE_URL+'/registration/snapscan';
+                    {
+                        if(response['already_member'])
+                            document.location = STORE_URL+'/account/login';
+                        else
+                            document.location = SITE_URL+'/registration/snapscan';
+                    }
                 }
                 else
                     alert('Something seems to have gone wrong, please try again later.');
