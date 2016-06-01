@@ -197,9 +197,13 @@ class RegistrationController extends AppController
         }
 
         $checkUser = $this->Shopify->_findUsers($this->request->data['email']);
+        $userTagStatus = $this->Shopify->_checkUserTagStatus($checkUser);
 
         if(count($checkUser->customers) > 0)
-            $returnData['already_member'] = true;
+        {
+            if($userTagStatus)
+                $returnData['already_member'] = true;
+        }
 
         $customers = TableRegistry::get('Customers');
         $customerData = $customers->find()->where(['email' => $data['email']])->toArray();
